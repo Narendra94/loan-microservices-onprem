@@ -1,0 +1,106 @@
+version: "3.9"
+
+services:
+  # ---------------------
+  # Databases
+  # ---------------------
+  postgres:
+    image: postgres:15
+    container_name: postgres_db
+    environment:
+      POSTGRES_USER: loanuser
+      POSTGRES_PASSWORD: loanpass
+      POSTGRES_DB: loandb
+    ports:
+      - "5432:5432"
+    networks:
+      - micro_net
+
+  # ---------------------
+  # Service Discovery (Eureka)
+  # ---------------------
+  eureka-server:
+    build: ./eureka-server
+    container_name: eureka_server
+    ports:
+      - "8761:8761"
+    networks:
+      - micro_net
+
+  # ---------------------
+  # Config Server
+  # ---------------------
+  config-service:
+    build: ./config-service
+    container_name: config_service
+    ports:
+      - "8888:8888"
+    depends_on:
+      - eureka-server
+    networks:
+      - micro_net
+
+  # ---------------------
+  # API Gateway
+  # ---------------------
+  gateway-service:
+    build: ./gateway-service
+    container_name: gateway_service
+    ports:
+      - "8080:8080"
+    environment:
+      - EUREKA_SERVER_URL=http://eureka-server:8761/eureka
+      - CONFIG_SERVER_URL=http://config-service:8888
+    depends_on:
+      - eureka-server
+      - config-service
+      - customer-service
+      - loan-service
+    networks:
+      - micro_net
+
+  # ---------------------
+  # Customer Service
+  # ---------------------
+  customer-service:
+    build: ./customer-service
+    container_name: customer_service
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/loandb
+      - SPRING_DATASOURCE_USERNAME=loanuser
+      - SPRING_DATASOURCE_PASSWORD=loanpass
+      - EUREKA_SERVER_URL=http://eureka-server:8761/eureka
+      - CONFIG_SERVER_URL=http://config-service:8888
+    depends_on:
+      - postgres
+      - eureka-server
+      - config-service
+    networks:
+      - micro_net
+
+  # ---------------------
+  # Loan Service
+  # ---------------------
+  loan-service:
+    build: ./loan-service
+    container_name: loan_service
+    ports:
+      - "8083:8083"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/loandb
+      - SPRING_DATASOURCE_USERNAME=loanuser
+      - SPRING_DATASOURCE_PASSWORD=loanpass
+      - EUREKA_SERVER_URL=http://eureka-server:8761/eureka
+      - CONFIG_SERVER_URL=http://config-service:8888
+    depends_on:
+      - postgres
+      - eureka-server
+      - config-service
+    networks:
+      - micro_net
+
+networks:
+  micro_net:
+    driver: bridge
