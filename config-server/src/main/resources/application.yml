@@ -9,6 +9,11 @@ spring:
     config:
       server:
         git:
-          uri: https://github.com/your-username/loan-microservices-config
+          uri: https://github.com/Narendra94/loan-microservices-config
           clone-on-start: true
           default-label: main
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka

@@ -1,28 +1,34 @@
 package com.example.loan.controller;
 
-import com.example.loan.model.Loan;
-import com.example.loan.repository.LoanRepository;
-import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
+
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.example.loan.model.Loan;
+import com.example.loan.service.LoanService;
 
 @RestController
 @RequestMapping("/loans")
 public class LoanController {
 
-    private final LoanRepository repository;
+    private final LoanService loanService;
 
-    public LoanController(LoanRepository repository) {
-        this.repository = repository;
+    public LoanController(LoanService loanService) {
+        this.loanService = loanService;
     }
 
-    @GetMapping
-    public List<Loan> getAll() {
-        return repository.findAll();
+    @GetMapping("/{customerId}")
+    public List<Loan> getLoans(@PathVariable Long customerId) {
+        return loanService.getLoanByCustomer(customerId);
     }
 
     @PostMapping
-    public Loan create(@RequestBody Loan loan) {
-        return repository.save(loan);
+    public Loan addLoan(@RequestBody Loan loan) {
+        return loanService.saveLoan(loan);
     }
 }
